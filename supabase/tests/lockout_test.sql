@@ -11,7 +11,7 @@ insert into assets (id, fleet_number, asset_type_id, station) values ('10000000-
 insert into checklist_templates values ('tpl-towbar',1,'towbar','[{"id":"tb-1","text":"Shear pins","critical":true},{"id":"tb-5","text":"Wheels","critical":false}]',true,null,now());
 set role authenticated; set request.jwt.sub = '00000000-0000-0000-0000-000000000001';
 insert into inspections (id, asset_id, template_id, template_version, user_id, station, started_at, submitted_at, outcome, results, signature)
- values ('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','tpl-towbar',1,'00000000-0000-0000-0000-000000000001','JNB',now(),now(),'unserviceable','[]','sig');
+ values ('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','tpl-towbar',1,'00000000-0000-0000-0000-000000000001','JNB',now(),now(),'unserviceable','[{"itemId":"tb-1","result":"fail","comment":"Sheared"},{"itemId":"tb-5","result":"pass"}]','sig');
 -- device claims not critical; server must correct it
 insert into defects (id, asset_id, inspection_id, item_id, item_text, critical, description, raised_by, raised_at)
  values ('30000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001','tb-1','Shear pins',false,'Sheared','00000000-0000-0000-0000-000000000001',now());
