@@ -58,7 +58,7 @@ export default function InspectScreen() {
     return (
       <ScrollView style={s.screen} contentContainerStyle={s.pad}>
         <Text style={s.h1}>{asset.fleetNumber}</Text>
-        <Badge label={status.label} color={status.color} />
+        <Badge label={status.label} color={status.color} soft={status.soft} />
         <Card style={{ borderColor: colors.fail, borderWidth: 2 }}>
           <Text style={[s.h2, { color: colors.fail }]}>Do not use this equipment</Text>
           <Text style={s.body}>A critical defect has locked this asset out. Only a manager can return it to service.</Text>
@@ -122,7 +122,7 @@ export default function InspectScreen() {
     <ScrollView style={s.screen} contentContainerStyle={s.pad} keyboardShouldPersistTaps="handled">
       <Text style={s.h1}>{asset.fleetNumber}</Text>
       <Text style={s.muted}>{asset.typeName} · checklist v{template.version}</Text>
-      <Badge label={status.label} color={status.color} />
+      <Badge label={status.label} color={status.color} soft={status.soft} />
       {!isDueToday(asset.lastInspectedAt) && <Text style={s.muted}>Already inspected today. You can inspect again if conditions have changed.</Text>}
       <Text style={s.muted}>
         {position ? (position.station ? `Station: ${position.station} (from GPS)` : 'Outside JNB and CPT: this inspection will be flagged for review') : locError ?? 'Getting location…'}
@@ -142,11 +142,11 @@ export default function InspectScreen() {
       <Card>
         <Text style={s.h2}>Summary</Text>
         <Text style={s.body}>{answered} of {template.items.length} items answered</Text>
-        <Badge label={`Outcome: ${STATUS_LABEL[outcome].label}`} color={STATUS_LABEL[outcome].color} />
+        <Badge label={`Outcome: ${STATUS_LABEL[outcome].label}`} color={STATUS_LABEL[outcome].color} soft={STATUS_LABEL[outcome].soft} />
         <Text style={s.body}>Sign by entering your staff number ({user.name}):</Text>
         <TextInput style={s.input} placeholder="Staff number" keyboardType="number-pad" value={confirmStaff} onChangeText={setConfirmStaff} />
         {showIssues && issues.length > 0 && <Text style={s.error}>{issues.length} item(s) need attention above.</Text>}
-        <Button title="Sign and submit" onPress={submit} disabled={!staffOk} color={outcome === 'unserviceable' ? colors.fail : colors.primary} />
+        <Button icon="checkmark-circle-outline" title="Sign and submit" onPress={submit} disabled={!staffOk} color={outcome === 'unserviceable' ? colors.fail : colors.primary} />
       </Card>
 
       <PhotoCapture
@@ -165,7 +165,7 @@ function ItemCard({ item, r, issues, set, onPhoto }: { item: ChecklistItem; r?: 
   return (
     <Card style={issues.length ? { borderColor: colors.fail, borderWidth: 2 } : undefined}>
       <Text style={s.body}>{item.text}</Text>
-      {item.critical && <Badge label="CRITICAL: a fail locks out the asset" color={colors.fail} />}
+      {item.critical && <Badge label="Critical: a fail locks out the asset" color={colors.fail} soft={colors.failSoft} />}
       {item.helpText && <Text style={s.muted}>{item.helpText}</Text>}
       {item.reading && (
         <TextInput
@@ -186,7 +186,7 @@ function ItemCard({ item, r, issues, set, onPhoto }: { item: ChecklistItem; r?: 
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
               onPress={() => set({ result: b.value })}
-              style={{ flex: 1, paddingVertical: 14, borderRadius: 8, alignItems: 'center', borderWidth: 2, borderColor: b.color, backgroundColor: on ? b.color : '#fff' }}
+              style={{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', borderWidth: 2, borderColor: b.color, backgroundColor: on ? b.color : '#fff' }}
             >
               <Text style={{ fontSize: 16, fontWeight: '700', color: on ? '#fff' : b.color }}>{b.label}</Text>
             </Pressable>
@@ -200,7 +200,7 @@ function ItemCard({ item, r, issues, set, onPhoto }: { item: ChecklistItem; r?: 
           <View style={[s.row, { flexWrap: 'wrap' }]}>
             {r?.photoUris.map((u) => <Image key={u} source={{ uri: u }} style={{ width: 72, height: 72, borderRadius: 6 }} />)}
           </View>
-          <Button title={r?.photoUris.length ? 'Add another photo' : 'Take photo (required)'} color={colors.fail} onPress={onPhoto} />
+          <Button icon="camera-outline" title={r?.photoUris.length ? 'Add another photo' : 'Take photo (required)'} color={colors.fail} onPress={onPhoto} />
         </>
       )}
       {issues.map((m) => <Text key={m} style={s.error}>{m}</Text>)}

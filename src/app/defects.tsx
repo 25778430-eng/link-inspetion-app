@@ -50,7 +50,7 @@ export default function Defects() {
     <View style={s.screen}>
       {can(user.role, 'exportTrax') && (
         <View style={s.pad}>
-          <Button title="Export defects for TRAX (CSV)" onPress={exportTrax} />
+          <Button title="Export defects for TRAX (CSV)" icon="download-outline" onPress={exportTrax} />
         </View>
       )}
       <FlatList
@@ -65,7 +65,7 @@ export default function Defects() {
             <Card style={d.critical ? { borderColor: colors.fail, borderWidth: 2 } : undefined}>
               <View style={[s.row, { justifyContent: 'space-between' }]}>
                 <Text style={s.h2}>{asset?.fleetNumber ?? d.assetId}</Text>
-                <Badge label={d.critical ? 'LOCKED OUT' : 'Defect'} color={d.critical ? colors.fail : colors.warn} />
+                <Badge label={d.critical ? 'Locked out' : 'Defect'} color={d.critical ? colors.fail : colors.warn} soft={d.critical ? colors.failSoft : colors.warnSoft} />
               </View>
               <Text style={s.body}>{d.itemText}</Text>
               <Text style={s.muted}>{d.description}</Text>
