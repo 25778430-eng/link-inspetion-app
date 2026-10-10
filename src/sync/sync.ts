@@ -7,8 +7,9 @@ import {
   replaceReferenceData,
   setMeta,
   upsertDefects,
+  upsertServerInspections,
 } from '../db/local';
-import type { Asset, ChecklistItem, Defect, Division, Inspection, User } from '../domain/types';
+import type { Asset, ChecklistItem, Defect, Division, Inspection, ItemResult, User } from '../domain/types';
 import { PHOTO_BUCKET, supabase } from './supabase';
 
 export interface SyncResult {
@@ -137,14 +138,19 @@ async function uploadDefect(d: Defect, photoPath: Map<string, string>) {
 
 async function pullReferenceData() {
   const sb = supabase!;
-  const [profiles, types, assets, templates, defects] = await Promise.all([
+  // The last 30 days: open defects plus recently cleared ones, and inspections (the server only returns
+  // a user's own unless they are a supervisor or above).
+  const since = new Date(Date.now() - 30 * 86400000).toISOString();
+  const [profiles, types, assets, templates, defects, cleared, inspections] = await Promise.all([
     sb.from('profiles').select('id, name, staff_number, role, divisions').eq('active', true),
     sb.from('asset_types').select('id, name, division'),
     sb.from('assets').select('id, fleet_number, asset_type_id, station, description, status, last_inspected_at'),
     sb.from('checklist_templates').select('id, version, asset_type_id, items').eq('published', true),
     sb.from('defects').select('*').neq('status', 'closed'),
+    sb.from('defects').select('*').eq('status', 'closed').gte('cleared_at', since),
+    sb.from('inspections').select('*').gte('submitted_at', since).order('submitted_at', { ascending: false }).limit(1000),
   ]);
-  for (const r of [profiles, types, assets, templates, defects]) if (r.error) throw r.error;
+  for (const r of [profiles, types, assets, templates, defects, cleared, inspections]) if (r.error) throw r.error;
 
   replaceReferenceData({
     users: profiles.data!.map((p): User => ({ id: p.id, name: p.name, staffNumber: p.staff_number, role: p.role, divisions: p.divisions as Division[] })),
@@ -160,8 +166,28 @@ async function pullReferenceData() {
     })),
     templates: templates.data!.map((t) => ({ id: t.id, version: t.version, assetTypeId: t.asset_type_id, items: t.items as ChecklistItem[] })),
   });
+  upsertServerInspections(
+    inspections.data!.map((i) => ({
+      signature: i.signature,
+      inspection: {
+        id: i.id,
+        assetId: i.asset_id,
+        templateId: i.template_id,
+        templateVersion: i.template_version,
+        userId: i.user_id,
+        station: i.station,
+        latitude: i.latitude,
+        longitude: i.longitude,
+        startedAt: i.started_at,
+        submittedAt: i.submitted_at,
+        meterReading: i.meter_reading,
+        outcome: i.outcome,
+        results: (i.results as (Omit<ItemResult, 'photoUris'> & { photoPaths?: string[] })[]).map(({ photoPaths, ...r }) => ({ ...r, photoUris: photoPaths ?? [] })),
+      } satisfies Inspection,
+    })),
+  );
   upsertDefects(
-    defects.data!.map((d): Defect => ({
+    [...defects.data!, ...cleared.data!].map((d): Defect => ({
       id: d.id,
       assetId: d.asset_id,
       inspectionId: d.inspection_id,

@@ -1,24 +1,23 @@
 {
   "expo": {
-    "name": "Link Inspection",
-    "slug": "link-inspection-app",
+    "name": "LinkSpec",
+    "slug": "linkspec",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.link.inspection"
+      "bundleIdentifier": "com.airlink.linkspec"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0C0048",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.link.inspection"
+      "package": "com.airlink.linkspec"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,10 +37,12 @@
         {
           "locationWhenInUsePermission": "Your location sets the station (JNB or CPT) on each inspection."
         }
-      ]
+      ],
+      "expo-font"
     ],
-    "scheme": "linkinspection",
+    "scheme": "linkspec",
     "splash": {
+      "image": "./assets/splash-icon.png",
       "backgroundColor": "#0C0048",
       "resizeMode": "contain"
     },

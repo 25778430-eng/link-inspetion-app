@@ -128,8 +128,10 @@ function toAsset(r: AssetRow & { type_name: string; division: string }): AssetWi
 
 const ASSET_SELECT = `SELECT a.*, t.name AS type_name, t.division FROM assets a JOIN asset_types t ON t.id = a.asset_type_id`;
 
-export function listAssets(division: string): AssetWithType[] {
-  return db.getAllSync<AssetRow & { type_name: string; division: string }>(`${ASSET_SELECT} WHERE t.division = ? ORDER BY a.station, a.fleet_number`, division).map(toAsset);
+export function listAssets(division?: string): AssetWithType[] {
+  return division
+    ? db.getAllSync<AssetRow & { type_name: string; division: string }>(`${ASSET_SELECT} WHERE t.division = ? ORDER BY a.station, a.fleet_number`, division).map(toAsset)
+    : db.getAllSync<AssetRow & { type_name: string; division: string }>(`${ASSET_SELECT} ORDER BY a.station, a.fleet_number`).map(toAsset);
 }
 
 export function getAsset(id: string): AssetWithType | null {
@@ -165,6 +167,38 @@ export function saveSubmittedInspection(inspection: Inspection, signature: strin
     db.runSync('UPDATE assets SET last_inspected_at = ? WHERE id = ?', inspection.submittedAt, inspection.assetId);
   });
   refreshAssetStatus(inspection.assetId);
+}
+
+export interface InspectionSummary {
+  inspection: Inspection;
+  fleetNumber: string;
+  typeName: string;
+  division: string;
+}
+
+/** Most recent first. Includes inspections pulled from the server (a supervisor sees the whole station). */
+export function listInspections(filter: { userId?: string; sinceIso?: string; limit?: number } = {}): InspectionSummary[] {
+  const rows = db.getAllSync<{ json: string; fleet_number: string | null; type_name: string | null; division: string | null }>(
+    `SELECT i.json, a.fleet_number, t.name AS type_name, t.division FROM inspections i
+     LEFT JOIN assets a ON a.id = i.asset_id LEFT JOIN asset_types t ON t.id = a.asset_type_id`,
+  );
+  return rows
+    .map((r) => ({ inspection: JSON.parse(r.json) as Inspection, fleetNumber: r.fleet_number ?? '?', typeName: r.type_name ?? '', division: r.division ?? '' }))
+    .filter((x) => (!filter.userId || x.inspection.userId === filter.userId) && (!filter.sinceIso || (x.inspection.submittedAt ?? '') >= filter.sinceIso))
+    .sort((a, b) => (b.inspection.submittedAt ?? '').localeCompare(a.inspection.submittedAt ?? ''))
+    .slice(0, filter.limit ?? 200);
+}
+
+/** Store inspections downloaded from the server. Never touches ones still waiting to upload. */
+export function upsertServerInspections(list: { inspection: Inspection; signature: string }[]) {
+  db.withTransactionSync(() => {
+    for (const { inspection, signature } of list) {
+      db.runSync(
+        'INSERT INTO inspections (id, asset_id, json, signature, synced) VALUES (?, ?, ?, ?, 1) ON CONFLICT(id) DO UPDATE SET json = excluded.json WHERE synced = 1',
+        inspection.id, inspection.assetId, JSON.stringify(inspection), signature,
+      );
+    }
+  });
 }
 
 export function listDefects(filter: { assetId?: string; openOnly?: boolean } = {}): Defect[] {

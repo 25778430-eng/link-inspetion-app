@@ -1,12 +1,12 @@
-import { router, Stack } from 'expo-router';
+import { Lato_300Light, Lato_400Regular, Lato_700Bold, useFonts } from '@expo-google-fonts/lato';
+import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { getMeta, initDb, seedDemoData, setMeta } from '../db/local';
 import { SessionProvider } from '../state/session';
 import { isDemoMode } from '../sync/supabase';
 import { startAutoSync } from '../sync/sync';
-import { HeaderIcon } from '../ui/components';
-import { colors } from '../ui/theme';
+import { useTheme } from '../ui/theme';
 
 initDb();
 if (isDemoMode && getMeta('demoSeeded') !== '1') {
@@ -14,29 +14,27 @@ if (isDemoMode && getMeta('demoSeeded') !== '1') {
   setMeta('demoSeeded', '1');
 }
 
-const settingsButton = () => <HeaderIcon name="settings-sharp" label="Settings" onPress={() => router.push('/settings')} />;
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const { c } = useTheme();
+  const [fontsLoaded, fontError] = useFonts({ Lato_300Light, Lato_400Regular, Lato_700Bold });
+  const ready = fontsLoaded || !!fontError;
+
   useEffect(() => startAutoSync(), []);
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync();
+  }, [ready]);
+  if (!ready) return null;
+
   return (
     <SessionProvider>
+      {/* Every screen opens with the navy header, so the status bar is always light. */}
       <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: colors.primary },
-          headerTintColor: colors.onPrimary,
-          headerTitleAlign: 'center',
-          headerTitleStyle: { fontWeight: '700', fontSize: 19 },
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: colors.bg },
-        }}
-      >
-        <Stack.Screen name="index" options={{ title: 'Link Inspection', headerRight: settingsButton }} />
-        <Stack.Screen name="home" options={{ title: 'Link Inspection', headerBackVisible: false, headerRight: settingsButton }} />
-        <Stack.Screen name="scan" options={{ title: 'Scan asset' }} />
-        <Stack.Screen name="inspect/[assetId]" options={{ title: 'Inspection' }} />
-        <Stack.Screen name="defects" options={{ title: 'Defects and lock-outs' }} />
-        <Stack.Screen name="settings" options={{ title: 'Settings', presentation: 'modal' }} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="inspect/[assetId]" />
       </Stack>
     </SessionProvider>
   );
