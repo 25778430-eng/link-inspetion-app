@@ -40,8 +40,8 @@ If no backend is configured, the app runs in **demo mode**. It has demo assets a
 ## Connect the backend (Supabase)
 
 1. Create a Supabase project. For data residency, choose a region close to South Africa.
-2. Run `supabase/migrations/0001_init.sql` (`supabase db push`, or paste it into the SQL editor).
-3. Create users in Supabase Auth, add a `profiles` row for each (role, divisions, station), then load `asset_types`, `assets` and published `checklist_templates`. The starter checklists in `src/domain/seed.ts` can be used as the first templates.
+2. In the SQL editor, run `supabase/migrations/0001_init.sql`, then `supabase/seed.sql` (starter asset types and checklists, generated from `src/domain/seed.ts` by `scripts/gen-seed-sql.ts`).
+3. Create users under Authentication > Users, then use `supabase/first_users.sql` to give each one a profile (role, divisions, station) and to add your assets.
 4. Copy `.env.example` to `.env` and fill in `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 
 Microsoft 365 sign-in can be added by enabling the Azure provider in Supabase Auth. It is not wired into the app yet; version 1 uses email and password.
