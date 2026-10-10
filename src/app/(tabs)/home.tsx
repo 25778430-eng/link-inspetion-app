@@ -32,7 +32,7 @@ function AssetRow({ item }: { item: AssetWithType }) {
         ? { label: 'With defects', color: c.warnText, soft: c.warnSoft }
         : { label: 'Done', color: c.passText, soft: c.passSoft }
       : { label: 'Due today', color: c.link, soft: c.primarySoft };
-  const initials = item.typeName.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+  const initials = item.fleetNumber.split('-')[0].slice(0, 3).toUpperCase();
   return (
     <Pressable
       accessibilityRole="button"
